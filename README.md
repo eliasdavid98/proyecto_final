@@ -144,8 +144,9 @@ python -m pip install -r requirements.txt
 
 ## Estado parcial frente a la consigna
 
-- Los flujos de CI/CD están definidos, pero todavía no hay evidencia de una
-  ejecución verde ni de una imagen publicada en GitHub.
+- Para el commit `d101d5d`, CI pasó las pruebas y la construcción de la imagen;
+  CD publicó la imagen en GHCR. Los resultados de ejecuciones posteriores se
+  deben revisar en [GitHub Actions](https://github.com/eliasdavid98/proyecto_final/actions).
 - El flujo de reentrenamiento registra el gate por falta de outcomes y exige
   aprobación; no ejecuta todavía el entrenamiento, evaluación y promoción
   challenger descritos en 7.1–7.4.
