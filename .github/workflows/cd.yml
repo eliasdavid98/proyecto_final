@@ -32,7 +32,7 @@ jobs:
         env:
           MLFLOW_TRACKING_URI: file:./.ci-mlruns
           PREDICTION_MODE: model
-        run: pytest -q
+        run: python -m pytest -q
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

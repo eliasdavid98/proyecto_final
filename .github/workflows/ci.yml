@@ -30,7 +30,7 @@ jobs:
         env:
           MLFLOW_TRACKING_URI: file:./.ci-mlruns
           PREDICTION_MODE: model
-        run: pytest -q
+        run: python -m pytest -q
 
       - name: Build API image
         run: docker build -f api/Dockerfile -t pset4-api:ci .
