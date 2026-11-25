@@ -1,0 +1,42 @@
+id: pset4_produccion_lotes
+namespace: pset4
+description: >
+  Ejecuta ocho lotes sintéticos desde la OBT bancaria, invoca la API,
+  persiste predicciones y monitoreo en Snowflake y exporta CSV sin features
+  ni identificadores de cliente.
+
+inputs:
+  - id: batch_count
+    type: INT
+    defaults: 8
+  - id: start_date
+    type: STRING
+    defaults: "2026-01-05"
+
+tasks:
+  - id: production_demo
+    type: io.kestra.plugin.scripts.python.Commands
+    containerImage: "{{ envs.api_image }}"
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      user: "0:0"
+    commands:
+      - >-
+        python /app/scripts/run_production_batch.py
+        --batch-count {{ inputs.batch_count }}
+        --execution-id {{ execution.id }}
+        --start-date {{ inputs.start_date }}
+        --output-dir "{{ workingDir }}/output"
+    env:
+      API_BASE_URL: http://host.docker.internal:8000
+      SNOWFLAKE_ACCOUNT: "{{ envs.snowflake_account }}"
+      SNOWFLAKE_USERNAME: "{{ envs.snowflake_username }}"
+      SNOWFLAKE_PASSWORD: "{{ secret('SNOWFLAKE_PASSWORD') }}"
+      SNOWFLAKE_DATABASE: "{{ envs.snowflake_database }}"
+      SNOWFLAKE_WAREHOUSE: "{{ envs.snowflake_warehouse }}"
+      SNOWFLAKE_ROLE: "{{ envs.snowflake_role | default('') }}"
+      SNOWFLAKE_GOLD_SCHEMA: "{{ envs.snowflake_gold_schema }}"
+      SNOWFLAKE_OBT_TABLE: "{{ envs.snowflake_obt_table }}"
+      SNOWFLAKE_MONITORING_SCHEMA: MONITORING
+    outputFiles:
+      - output/*.csv

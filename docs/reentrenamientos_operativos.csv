@@ -1,0 +1,2 @@
+retraining_id,created_at,trigger_batch_id,trigger_reason,status,target_available,candidate_run_id,evaluation_metric,promotion,decision,reason
+O28vMpUyhUiT7ByseKSch-synthetic-week-08:retraining-gate,2026-11-25 07:45:50.607-08:00,O28vMpUyhUiT7ByseKSch-synthetic-week-08,PSI > 0.25,blocked,False,,,not_evaluated,no_retraining,El lote test de competencia no tiene etiquetas; se bloquea el reentrenamiento para no inventar targets ni reutilizar el holdout.

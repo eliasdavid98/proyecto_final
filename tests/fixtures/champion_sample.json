@@ -1,0 +1,138 @@
+{
+  "description": "Synthetic, non-customer examples for repeatable CI model inference. This fixture verifies packaging and deterministic outputs; it is not evidence of real-world or holdout performance.",
+  "model_name": "pset3-churn-classifier",
+  "version": "1",
+  "run_id": "fa804ba98b5b4b02acf59f02b82e81cd",
+  "features": [
+    {
+      "geography": "France",
+      "gender": "Female",
+      "age_band": "40-49",
+      "age_band_min_age": 40,
+      "age_band_max_age": 49,
+      "number_of_products": 2.0,
+      "credit_score": 650.0,
+      "age": 42.0,
+      "tenure": 7.0,
+      "balance": 0.0,
+      "has_credit_card": 1.0,
+      "is_active_member": 0.0,
+      "estimated_salary": 184843.77
+    },
+    {
+      "geography": "Germany",
+      "gender": "Male",
+      "age_band": "30-39",
+      "age_band_min_age": 30,
+      "age_band_max_age": 39,
+      "number_of_products": 1.0,
+      "credit_score": 720.0,
+      "age": 35.0,
+      "tenure": 5.0,
+      "balance": 85000.0,
+      "has_credit_card": 1.0,
+      "is_active_member": 1.0,
+      "estimated_salary": 110000.0
+    },
+    {
+      "geography": "Spain",
+      "gender": "Female",
+      "age_band": "50+",
+      "age_band_min_age": 50,
+      "age_band_max_age": 100,
+      "number_of_products": 3.0,
+      "credit_score": 580.0,
+      "age": 58.0,
+      "tenure": 2.0,
+      "balance": 145000.0,
+      "has_credit_card": 0.0,
+      "is_active_member": 0.0,
+      "estimated_salary": 75000.0
+    },
+    {
+      "geography": "France",
+      "gender": "Male",
+      "age_band": "18-29",
+      "age_band_min_age": 18,
+      "age_band_max_age": 29,
+      "number_of_products": 2.0,
+      "credit_score": 780.0,
+      "age": 24.0,
+      "tenure": 10.0,
+      "balance": 0.0,
+      "has_credit_card": 1.0,
+      "is_active_member": 1.0,
+      "estimated_salary": 125000.0
+    },
+    {
+      "geography": "Germany",
+      "gender": "Female",
+      "age_band": "40-49",
+      "age_band_min_age": 40,
+      "age_band_max_age": 49,
+      "number_of_products": 1.0,
+      "credit_score": 690.0,
+      "age": 45.0,
+      "tenure": 3.0,
+      "balance": 92000.0,
+      "has_credit_card": 1.0,
+      "is_active_member": 0.0,
+      "estimated_salary": 90000.0
+    },
+    {
+      "geography": "Spain",
+      "gender": "Male",
+      "age_band": "30-39",
+      "age_band_min_age": 30,
+      "age_band_max_age": 39,
+      "number_of_products": 4.0,
+      "credit_score": 610.0,
+      "age": 32.0,
+      "tenure": 8.0,
+      "balance": 43000.0,
+      "has_credit_card": 0.0,
+      "is_active_member": 1.0,
+      "estimated_salary": 165000.0
+    }
+  ],
+  "expected_probabilities": [
+    0.06984850552793768,
+    0.07694718676781918,
+    0.9884392529890713,
+    0.013382871564994653,
+    0.7361710444495454,
+    0.8294299462762458
+  ],
+  "expected_labels": [
+    0,
+    0,
+    1,
+    0,
+    1,
+    1
+  ],
+  "reference_metrics_from_registry_run": {
+    "cv_roc_auc": 0.9317008753549784,
+    "cv_average_precision": 0.8198304862977656,
+    "holdout_roc_auc": 0.9323358928621105,
+    "holdout_average_precision": 0.830134077636892
+  },
+  "challenger_version": "2",
+  "challenger_run_id": "97afc921649a44199dada5ede3bc78a1",
+  "challenger_probabilities": [
+    0.3232657144257108,
+    0.32667955633460527,
+    0.8845323398823348,
+    0.05707164358478536,
+    0.9321937534579152,
+    0.3373407672589181
+  ],
+  "challenger_labels": [
+    0,
+    0,
+    1,
+    0,
+    1,
+    0
+  ]
+}

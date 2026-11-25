@@ -1,0 +1,32 @@
+id: pset4_bloqueo_reentrenamiento
+namespace: pset4
+description: >
+  Registra el bloqueo de reentrenamiento mientras los lotes de competencia no
+  tengan outcomes etiquetados y revisados por una persona.
+
+inputs:
+  - id: trigger_batch_id
+    type: STRING
+
+tasks:
+  - id: check_retraining_gate
+    type: io.kestra.plugin.scripts.python.Commands
+    containerImage: "{{ envs.api_image }}"
+    commands:
+      - >-
+        python /app/scripts/retraining_gate.py
+        --batch-id {{ inputs.trigger_batch_id }}
+    env:
+      SNOWFLAKE_ACCOUNT: "{{ envs.snowflake_account }}"
+      SNOWFLAKE_USERNAME: "{{ envs.snowflake_username }}"
+      SNOWFLAKE_PASSWORD: "{{ secret('SNOWFLAKE_PASSWORD') }}"
+      SNOWFLAKE_DATABASE: "{{ envs.snowflake_database }}"
+      SNOWFLAKE_WAREHOUSE: "{{ envs.snowflake_warehouse }}"
+      SNOWFLAKE_ROLE: "{{ envs.snowflake_role | default('') }}"
+      SNOWFLAKE_MONITORING_SCHEMA: MONITORING
+
+  - id: approval_required
+    type: io.kestra.plugin.core.log.Log
+    message: >
+      Reentrenamiento no ejecutado. Se requiere disponibilidad de outcomes
+      posteriores y aprobación humana antes de evaluar o promover un candidato.
