@@ -168,7 +168,7 @@ tasks:
 
   - id: load_sample_submission
     type: io.kestra.plugin.jdbc.snowflake.Query
-    schema: "{{ envs.SNOWFLAKE_SCHEMA }}"
+    schema: "{{ envs.snowflake_schema }}"
     sql: |
       COPY INTO SAMPLE_SUBMISSION
       FROM @PSET2_STAGE/sample_submission/sample_submission.csv.gz

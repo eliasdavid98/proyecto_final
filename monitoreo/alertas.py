@@ -59,3 +59,45 @@ def performance_below_threshold(
     if metric_value is None:
         return False
     return metric_value < cv_mean - sigma * cv_std
+
+
+def build_concept_drift_alerts(
+    batch_id: str,
+    roc_auc: float | None,
+    average_precision: float | None,
+    cv_roc_auc_mean: float = 0.9317,
+    cv_roc_auc_std: float = 0.0026,
+    cv_ap_mean: float = 0.8198,
+    cv_ap_std: float = 0.0039,
+    thresholds: AlertThresholds = AlertThresholds(),
+) -> list[dict[str, Any]]:
+    alerts: list[dict[str, Any]] = []
+    checks = [
+        ("ROC_AUC", roc_auc, cv_roc_auc_mean, cv_roc_auc_std),
+        ("AVERAGE_PRECISION", average_precision, cv_ap_mean, cv_ap_std),
+    ]
+    for metric_name, value, mean, std in checks:
+        if value is None:
+            continue
+        limit = mean - thresholds.concept_drift_sigma * std
+        if value < limit:
+            alerts.append(
+                {
+                    "alert_id": f"{batch_id}:{metric_name.lower()}:concept_drift",
+                    "batch_id": batch_id,
+                    "metric": metric_name,
+                    "value": float(value),
+                    "threshold": float(limit),
+                    "window": "1 lote semanal sintético (contra CV PSet 3)",
+                    "severity": "alta",
+                    "recipient": "Equipo de datos y negocio",
+                    "action": (
+                        "Evaluar deriva conceptual y verificar si se cumplen "
+                        f"{thresholds.consecutive_performance_batches} lotes "
+                        "consecutivos para disparar reentrenamiento."
+                    ),
+                    "supporting_test": "cv_mean_minus_2sd",
+                    "supporting_p_value": None,
+                }
+            )
+    return alerts

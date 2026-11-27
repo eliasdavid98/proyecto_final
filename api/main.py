@@ -60,6 +60,12 @@ DUMMY_PRIOR_PROBABILITY = 0.20641666666666666
 DEFAULT_REFRESH_SECONDS = 5.0
 IDENTIFIER_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_$]*\Z")
 
+def evaluate_business_rule(features: ModelFeatures) -> bool:
+    """Línea base de negocio bancaria interpretable sin ML."""
+    return bool(
+        features.number_of_products >= 3
+        or (features.age >= 40 and features.is_active_member == 0)
+    )
 
 @dataclass(frozen=True)
 class ModelBundle:
@@ -188,6 +194,17 @@ class RegistryModelProvider:
             if forced_fallback
             else self._error
         )
+        if mode == "business_rule":
+            rule_hit = evaluate_business_rule(features)
+            return InferenceResult(
+                probability=1.0 if rule_hit else 0.0,
+                decision="contactar" if rule_hit else "sin_contacto",
+                action="revision_humana_retencion" if rule_hit else "sin_accion",
+                model_version=None,
+                run_id=None,
+                used_fallback=True,
+                fallback_reason="PREDICTION_MODE=business_rule",
+            )
         if self._active is None or forced_fallback:
             probability = DUMMY_PRIOR_PROBABILITY
             version = None
@@ -392,14 +409,14 @@ def _decision_threshold() -> float:
 
 
 def _prediction_mode() -> Literal[
-    "model", "dummy_fallback", "manual_review_all"
+    "model", "dummy_fallback", "manual_review_all", "business_rule"
 ]:
     mode = os.getenv("PREDICTION_MODE", "model").strip().lower()
-    if mode in {"model", "dummy_fallback", "manual_review_all"}:
+    if mode in {"model", "dummy_fallback", "manual_review_all", "business_rule"}:
         return mode
     raise RuntimeError(
-        "PREDICTION_MODE debe ser 'model', 'dummy_fallback' o "
-        "'manual_review_all'."
+        "PREDICTION_MODE debe ser 'model', 'dummy_fallback', "
+        "'manual_review_all' o 'business_rule'."
     )
 
 

@@ -108,7 +108,7 @@ services:
       dockerfile: api/mlflow.Dockerfile
     restart: unless-stopped
     environment:
-      MLFLOW_SERVER_ALLOWED_HOSTS: "mlflow:5000,localhost:*,127.0.0.1:*"
+      MLFLOW_SERVER_ALLOWED_HOSTS: "mlflow:5000,localhost:*,127.0.0.1:*,host.docker.internal:*"
     ports:
       - "${MLFLOW_HOST_PORT:-5001}:5000"
     volumes:

@@ -1,22 +1,46 @@
-# Registro de cambios y decisiones PSet 1–4
+# Registro de Cambios y Decisiones Actualizadas (PSets #1 a #4)
 
-Este registro separa las decisiones históricas de PSet 1 de lo que realmente permiten afirmar los datos integrados. No atribuye al modelo resultados de negocio que no se midieron.
+Este documento registra las correcciones aplicadas a las observaciones de los PSets #1, #2 y #3, así como las decisiones de negocio, datos y operación que evolucionaron a lo largo del proyecto end-to-end.
 
-| PSet / decisión u observación | Evidencia y efecto | Tratamiento en el proyecto final | Archivos afectados |
-|---|---|---|---|
-| PSet 1 propuso churn de contratos B2B de telecomunicaciones; PSet 2/3 usan la competencia de churn bancario. | La OBT tiene atributos bancarios (`credit_score`, `geography`, `balance`, productos) y `exited`; no contiene cuentas de telecom. | Por decisión del autor se conserva la OBT/modelo bancario para completar la parte operativa. La demo y sus métricas son técnicas sobre churn bancario y no validan el caso de negocio telecom ni su ROI. | `README.md`, memo y presentación PSet 4, `docs/cambios.md` |
-| PSet 1 fijó unidad cuenta/contrato, churn a 30–60 días y contacto semanal. | La OBT tiene una observación bancaria y etiqueta `exited`, pero no timestamps de eventos ni fecha de cancelación desde la cual medir 30–60 días. | Se conserva `exited` tal como viene del dataset. El horizonte de 30–60 días no es verificable y no se afirmará que la etiqueta bancaria represente ese plazo. El procesamiento se mantiene batch semanal por coherencia con la decisión periódica, no por una frecuencia observada en los datos. | `README.md`, `src/preparacion.py`, flujos Kestra y entregables PSet 4 |
-| PSet 1 propuso baseline comercial: más de dos tickets técnicos al mes o factura vencida más de 30 días. | Ninguna de esas variables existe en la OBT bancaria. | No se reconstruye ni se simula la regla. Dummy y regresión logística de PSet 3 son referencias estadísticas, no baseline comercial. La comparación de ROI/net churn queda no estimable sin datos de intervención, costos, LTV y grupo de control. | `README.md`, memo y presentación PSet 4 |
-| PSet 1 fijó PR-AUC, F2, umbral 0,60 y meta F2 ≥ 0,65; el pitch también menciona un umbral conservador 0,75. PSet 3 seleccionó por ROC-AUC y reportó `predict()` al umbral 0,50. | Los umbrales y criterios no son equivalentes; el holdout de PSet 3 ya se consumió una vez. | Para reproducir el modelo registrado se mantiene el umbral 0,50 usado en PSet 3. F2 puede reportarse como métrica técnica derivada con ese umbral, sin presentarlo como validación del umbral comercial de PSet 1. No se vuelve a evaluar el holdout como si fuera nuevo. | `src/seleccion.py`, API, pruebas, memo PSet 4 |
-| PSet 2/3 no disponen de una secuencia temporal de clientes. | `train.csv` contiene etiquetas, `test.csv` de competencia no tiene `exited`, y la OBT carece de fecha de evento. | Los lotes semanales de PSet 4 serán una partición sintética, con método y semilla reproducibles. La deriva inducida será un experimento controlado; no se interpretará como drift real ni como backtest temporal. | simulador, flujos Kestra, `docs/monitoreo.csv`, memo PSet 4 |
-| PSet 4 requiere respaldo operativo y análisis por subgrupo. | El champion presenta diferencias descriptivas por edad, género y geografía en el holdout de PSet 3 ya usado para selección. No existe una regla bancaria validada. | Se documentan los cortes como diagnóstico no independiente y se añade `PREDICTION_MODE=manual_review_all`: no consulta MLflow y deriva cada caso a revisión humana. No se presenta el prior Dummy como regla de negocio ni como score individual. | `api/main.py`, `api/esquemas.py`, `tests/test_contrato.py`, `docs/etica_operativa.md`, `README.md` |
-| El resultado económico de PSet 1 no puede inferirse de la competencia bancaria. | No hay etiquetas posteriores al lote, historial de acciones de retención, grupo de control ni costos/LTV del caso bancario. | La métrica de negocio se mantiene pendiente; no se reportan ROI, churn evitado ni beneficio económico. Se calculará cuando se incorporen outcomes, acciones y supuestos de costos. | `README.md`, `docs/cambios.md`, entregables PSet 4 |
-| Exportación operativa del PSet 4. | La ejecución Kestra `4eOcHGoRTiqI2Z1WceO0Af` terminó exitosamente después de la producción ya persistida. | Se guardan en `docs/` las cuatro salidas operativas de predicciones, monitoreo, alertas y estado de reentrenamiento; se verificaron encabezados y recuentos. El estado operativo se separa de las corridas MLflow para evitar que ambas exportaciones sobrescriban `reentrenamientos.csv`. No volver a ejecutar producción para recrearlas. | `docs/predicciones.csv`, `docs/monitoreo.csv`, `docs/alertas.csv`, `docs/reentrenamientos_operativos.csv` |
-| Retroalimentación formal recibida para PSet 1–3. | No se encontró un archivo separado de comentarios/rúbrica en las carpetas locales revisadas. | Pendiente de incorporar cualquier observación docente que el autor comparta; no se inventan correcciones atribuidas a una retroalimentación no disponible. | `docs/cambios.md` |
+## 1. Decisiones actualizadas entre PSets
 
-## Decisión operativa actual
+| Dimensión | Decisión inicial (PSet #1 / #2 / #3) | Decisión vigente (PSet #4) | Archivos actualizados |
+| :--- | :--- | :--- | :--- |
+| **Dominio y fuente de datos** | Propuesta inicial enfocada en churn B2B de telecomunicaciones (IBM Telco). | Se formaliza el dominio de **churn bancario** correspondiente a la OBT real en Snowflake (`CHURN_DB.GOLD.OBT_CUSTOMER_CHURN`, 25.000 filas: 15.000 `train` etiquetadas y 10.000 `test` sin etiqueta). | `README.md`, `dbt/`, `spark/build_obt.py`, `docs/PSet4_memo_pogo_torres.pdf` |
+| **Línea base de negocio** | Regla heurística de telecomunicaciones (>2 tickets técnicos/mes o mora >30 días). | Regla determinística bancaria sin ML: contactar si `number_of_products >= 3` o (`age >= 40` y `is_active_member == 0`). Opera también como respaldo automático y manual (`PREDICTION_MODE=business_rule`). | `api/main.py`, `scripts/run_production_batch.py`, `tests/test_comportamiento.py` |
+| **Métrica de negocio y ROI** | Proyección teórica del PSet #1 (reducción de 15% del churn) sin costos unitarios en el dataset. | Función explícita de valor neto por lote: `$300 USD` por retención exitosa (`TP`) menos `$25 USD` por contacto (`TP + FP`). En los 8 lotes simulados el modelo generó **$111.550 USD** vs. **$100.100 USD** de la regla base (**+$11.450 USD / +11,44%**) y **$0 USD** de no hacer nada. | `scripts/run_production_batch.py`, `src/reentrenar.py`, `dashboard/app.py`, `docs/monitoreo.csv` |
+| **Umbral de decisión** | Umbral propuesto de `0,60` en el PSet #1 sin validación empírica. | Umbral operativo fijado en `0,50` (`CHURN_DECISION_THRESHOLD=0.5`), coherente con el `F2 = 0,6936` auditado en el holdout del PSet #3 y usado en la API y el monitoreo. | `api/main.py`, `src/reentrenar.py`, `scripts/run_production_batch.py` |
+| **Grano de la OBT y clave primaria** | Granularidad a nivel de cliente individual (`CustomerId`). | Grano fijado en una fila por observación (`observation_id`), dado que `CustomerId` presenta 3.454 valores repetidos con atributos inconsistentes y 1 valor no entero (`id=5597`, `156917.93`) en `train`. | `dbt/models/silver/`, `dbt/models/gold/`, `spark/build_obt.py` |
+| **Infraestructura y orquestación** | Kestra y Spark en el PSet #2 separados del servidor local de MLflow del PSet #3. | Un único `docker-compose.yml` levanta Postgres, Kestra v2.0.10, MLflow, Spark (perfil `spark`), API FastAPI y Dashboard Streamlit. | `docker-compose.yml`, `.env.example` |
 
-- **Datos/modelo:** conservar el churn bancario y el champion de PSet 3; las afirmaciones de telecom permanecen como contexto histórico no validado.
-- **Patrón:** batch semanal para producir una lista de revisión, con intervención humana. No se justifica servicio de inferencia online para estos datos.
-- **Simulación:** lotes sintéticos para probar el pipeline operativo por falta de fechas. Las métricas por lote describen el ensayo computacional, no cambios ocurridos en el tiempo.
-- **Respaldo:** `PREDICTION_MODE=manual_review_all` suspende la decisión automática; no simula la antigua regla de tickets porque sus variables no están disponibles.
+---
+
+## 2. Correcciones a observaciones de PSets anteriores
+
+### PSet #1 (Propuesta y Pitch)
+* **Observación:** Desajuste entre el caso de negocio B2B telecom planteado en el pitch y los datos bancarios disponibles, así como cifras proyectadas sin respaldo empírico.
+* **Cambio aplicado:** Se reemplazaron todas las cifras proyectadas del pitch por los resultados reales de la simulación de 8 lotes (`+$11.450 USD`, `+11,44%` sobre la regla base) y se ajustó la presentación ejecutiva final al dominio bancario real.
+* **Archivos:** `docs/PSet4_presentacion_pogo_torres.pdf`, `docs/PSet4_memo_pogo_torres.pdf`.
+
+### PSet #2 (Ingesta, Calidad, dbt y Spark)
+* **Observación:** El documento técnico del PSet #2 se encontraba en formato `.docx` en el historial y la orquestación entre etapas estaba fragmentada.
+* **Cambio aplicado:** Se convirtió `docs/historial/PSet2_memo_pogo_torres.pdf` a PDF, se unificaron los flujos de Kestra en `kestra/flows/` y se mantuvo el linaje completo (`RAW` → `BRONZE` → `SILVER` → `GOLD` → `OBT`) con trazabilidad de `OBT_SNAPSHOT_ID` (`HASH_AGG(*)`) en cada predicción y lote monitoreado.
+* **Archivos:** `docs/historial/PSet2_memo_pogo_torres.pdf`, `kestra/flows/ingesta.yml`, `scripts/run_production_batch.py`, `api/main.py`.
+
+### PSet #3 (Experimentación, Tracking y Registro)
+* **Observación 1:** MLflow corría fuera de Docker Compose y las corridas iniciales no capturaban automáticamente el snapshot de datos ni el ciclo de reentrenamiento.
+* **Cambio aplicado:** Se integró MLflow en `docker-compose.yml` (puerto `5001` en el host, `MLFLOW_SERVER_ALLOWED_HOSTS` habilitado para `host.docker.internal`), se preservó el historial consolidado de las 103 corridas originales más la corrida de reentrenamiento (`fase='reentrenamiento'`) en `docs/corridas.csv` y `docs/reentrenamientos.csv`.
+* **Archivos:** `docker-compose.yml`, `src/reentrenar.py`, `scripts/export_runs.py`, `docs/corridas.csv`, `docs/reentrenamientos.csv`.
+* **Observación 2:** Los notebooks requerían ejecución limpia de principio a fin con salidas guardadas y configuración compatible con el servidor MLflow de Compose.
+* **Cambio aplicado:** Se ejecutaron todos los notebooks en `notebooks/` con *Restart & Run All* apuntando a `http://localhost:5001` y se guardaron con todas sus salidas.
+* **Archivos:** `notebooks/*.ipynb`.
+
+---
+
+## 3. Cambios implementados durante el cierre del PSet #4
+
+* **Simulación etiquetada y monitoreo de deriva conceptual (`scripts/run_production_batch.py`, `monitoreo/alertas.py`):** Se migró la simulación al holdout etiquetado en 8 lotes semanales sintéticos (`n = 375` filas/lote), induciendo deriva de datos y conceptual en los lotes 6 y 7 (`balance += 50.000`, `geography = 'Germany'`, inversión de 33% en `is_active_member` y `exited`). Esto permitió medir `ROC-AUC`, `Average Precision`, `F2`, `MAX_PSI` y valor neto de negocio lote por lote.
+* **Respaldo dual e interruptor de retirada (`api/main.py`):** Se incorporó la variable `PREDICTION_MODE` (`model` | `business_rule`) para conmutar a la regla de negocio sin ML de forma controlada ante incidentes, además del respaldo automático ante fallos de carga del modelo.
+* **Ciclo completo de reentrenamiento con aprobación humana (`src/reentrenar.py`, `kestra/flows/reentrenamiento.yml`):** Se implementó el reentrenamiento sobre la ventana `development` + lotes 1–7, evaluando `champion` (v1) vs. `challenger` (v3, `run_id: 15d2b1befb6d42e598aa0b6d96a87fd5`) en el lote 8. Tras la pausa humana (`Pause` con input `BOOL`) en Kestra, v3 fue **rechazado** porque, aunque subió `ROC-AUC` (`+0,0029`), cayó en `F2` (`-0,0125`) y redujo el valor neto en `-$300 USD` (`$13.725` vs. `$14.025`).
+* **Visualización lote por lote (`dashboard/app.py`):** Se añadieron 4 gráficos en Streamlit (latencia p50/p95, desempeño `ROC-AUC`/`AP`/`F2` vs. límite `CV - 2*SD`, deriva `MAX_PSI` vs. umbral `0,25` y valor neto de negocio Modelo vs. Regla base).
+* **Higiene del repositorio (`.gitignore`):** Se eliminaron archivos `.DS_Store` y se excluyeron en `.gitignore`.
